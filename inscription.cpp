@@ -187,6 +187,7 @@ void Inscription::ajouter()
         {
             //etat actuelle
             historique.push_back(liste);
+            histoRetablir.clear();
 
             if((position >= std::size(liste)) || position < 0)
             {
@@ -255,6 +256,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
     if((ligne >= 0) && (ligne < (int)liste.size()))
     {
         historique.push_back(liste);
+        histoRetablir.clear();
 
         valeur = element->text().trimmed();
         switch(colonne)
@@ -300,6 +302,7 @@ void Inscription::supprimer()
     if(iPers != liste.end())
     {
         historique.push_back(liste);
+        histoRetablir.clear();
         liste.erase(iPers);
     }
     else
