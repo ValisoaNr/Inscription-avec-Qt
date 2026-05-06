@@ -1,5 +1,5 @@
-#include "inscription.h"
-#include "ui_inscription.h"
+#include "Inscription.h"
+#include "ui_Inscription.h"
 #include "Personne.h"
 #include <QMessageBox>
 #include <QTabWidget>
@@ -53,7 +53,7 @@ void Inscription::rechercher()
     vector<Personne>::iterator iPers;
     QTableWidget *tableau;
     QTableWidgetItem *nom , *prenom , *age;
-    int row ;
+    int nLigne ;
 
     initialise(pers , true);
     recherche = trouve(pers , liste);
@@ -66,21 +66,21 @@ void Inscription::rechercher()
         iPers = recherche.begin();
         while(iPers != recherche.end())
         {
-            row = tableau->rowCount();
-            tableau->insertRow(row);
+            nLigne = tableau->rowCount();
+            tableau->insertRow(nLigne);
 
             nom = new QTableWidgetItem();
             prenom = new QTableWidgetItem();
             age = new QTableWidgetItem();
             // insertion du nom
             nom->setText(iPers->getNom());
-            tableau->setItem(row , 0 , nom);
+            tableau->setItem(nLigne , 0 , nom);
             // prenom
             prenom->setText(iPers->getPrenom());
-            tableau->setItem(row , 1 , prenom);
+            tableau->setItem(nLigne , 1 , prenom);
             // age vers QString pour la troisieme colonne
             age->setText(QString::number(iPers->getAge()));
-            tableau->setItem(row , 2 , age);
+            tableau->setItem(nLigne , 2 , age);
             iPers++;
         }
 
@@ -354,7 +354,7 @@ void Inscription::EnregistrerFichier()
 
     nomFichier = QFileDialog::getSaveFileName(this);
     fichier = nomFichier.toStdString();
-    sorti.open(fichier.c_str());
+    sorti.open(fichier);
 
     if(sorti)
     {
@@ -388,7 +388,7 @@ void Inscription::OuvrirFichier()
     if(!(nomFichier.isEmpty()))
     {
         fichier = nomFichier.toStdString();
-        entree.open(fichier.c_str(), ios::in);
+        entree.open(fichier);
 
         if(entree)
         {

@@ -8,9 +8,9 @@ qt_standard_project_setup()
 qt_add_executable(EdTableau
     WIN32 MACOSX_BUNDLE
     main.cpp
-    inscription.cpp
-    inscription.h
-    inscription.ui
+    Inscription.cpp
+    Inscription.h
+    Inscription.ui
     Personne.h Personne.cpp
 )
 
