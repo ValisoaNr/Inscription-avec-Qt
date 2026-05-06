@@ -14,6 +14,7 @@ Inscription::Inscription(QWidget *parent)
     , ui(new Ui::Inscription)
 {
     ui->setupUi(this);
+
     connect(ui->ajouter , SIGNAL(clicked()) , this , SLOT(ajouter()));
     connect(ui->rechercher , SIGNAL(clicked()) , this , SLOT(rechercher()));
     connect(ui->supprimer , SIGNAL(clicked()) , this , SLOT(supprimer()));
@@ -158,6 +159,30 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
     }
     return (valide);
 }
+bool Inscription::estModifier()
+{
+    bool resultat;
+    vector<Personne>::iterator iPers , jPers;
+
+    resultat = true;
+    // consideré comme modification s'il n'est plus comme l'etat initial
+    if(!historique.empty())
+    {
+        iPers = liste.begin();
+        jPers = historique.front().begin();
+        while(*iPers == *jPers)
+        {
+            iPers++;
+            jPers++;
+        }
+        if((jPers == historique.front().end()) && (iPers == liste.end()))
+        {
+            resultat = false;
+        }
+    }
+
+    return (resultat);
+}
 void Inscription::ajouter()
 {
     Personne pers;
@@ -185,16 +210,16 @@ void Inscription::ajouter()
         }
         else
         {
-            //etat actuelle
-            historique.push_back(liste);
-            histoRetablir.clear();
-
-            if((position >= std::size(liste)) || position < 0)
+            if((position > std::size(liste)) || (position < 0))
             {
-                liste.push_back(pers);
+                QMessageBox::warning(this , "ErReur d'ajout" , "la position choisit doit etre entre 1 et la taille du tableau !");
             }
             else
             {
+                //etat actuelle
+                historique.push_back(liste);
+                histoRetablir.clear();
+
                 iPers = liste.begin() + position ;
                 liste.insert(iPers , pers);
             }
@@ -330,7 +355,6 @@ void Inscription::Annuler()
     }
 }
 
-
 void Inscription::Retablir()
 {
     if(histoRetablir.size() != 0)
@@ -352,7 +376,12 @@ void Inscription::EnregistrerFichier()
     ofstream sorti;
     vector<Personne>::iterator iPers;
 
-    nomFichier = QFileDialog::getSaveFileName(this);
+    nomFichier = QFileDialog::getSaveFileName(this , "Sauvegarder en fichier le feuille" , "" , "filtre csv (*.csv)");
+    if(nomFichier.length() == 0)
+    {
+        QMessageBox::warning(this , "annulation" , "Aucun nom de fichier n'a été introduit !");
+        return;
+    }
     fichier = nomFichier.toStdString();
     sorti.open(fichier);
 
@@ -377,14 +406,20 @@ void Inscription::EnregistrerFichier()
 }
 void Inscription::OuvrirFichier()
 {
-    QString nomFichier, nom, prenom;
+    QString nomFichier, nom, prenom , message;
     string fichier, chaine;
+    vector<vector <Personne>> tmp;
     vector<string> champs;
     ifstream entree;
-    int age;
+    int age , nLigne;
     Personne pers;
 
-    nomFichier = QFileDialog::getOpenFileName(this);
+    nomFichier = QFileDialog::getOpenFileName(this , "Importez un fichier l'editeur" , "" , "filtre csv (*.csv)");
+    if(nomFichier.length() == 0)
+    {
+        QMessageBox::warning(this , "annulation" , "Aucun fichier n'a été selectionné !");
+        return;
+    }
     if(!(nomFichier.isEmpty()))
     {
         fichier = nomFichier.toStdString();
@@ -392,9 +427,14 @@ void Inscription::OuvrirFichier()
 
         if(entree)
         {
+            // preserver en cas d'erreur du lecture de fichier actuelle
             historique.push_back(liste);
+            tmp = historique;
+            // pour voir les etats de modification
+            historique.clear();
             liste.clear();
 
+            nLigne = 1;
             while(getline(entree, chaine))
             {
                 champs = separe(',', chaine);
@@ -403,15 +443,35 @@ void Inscription::OuvrirFichier()
                     nom = QString::fromStdString(champs.at(0));
                     prenom = QString::fromStdString(champs.at(1));
                     age = atoi(champs.at(2).c_str());
-
+                    if((age == 0) || (!isalpha(nom.toStdString().at(0))) || (!isalpha(prenom.toStdString().at(0))))
+                    {
+                        message = "Erreur a la ligne : " + QString::number(nLigne);
+                        QMessageBox::warning(this , "Erreur de nommage" , message);
+                        // retourner à l'ancien liste en cas d'erreur
+                        historique = tmp;
+                        liste = historique.back();
+                        historique.pop_back();
+                    }
                     pers.setNom(nom);
                     pers.setPrenom(prenom);
                     pers.setAge(age);
                     liste.push_back(pers);
                 }
+                else
+                {
+                    message = "Ce fichier presente une erreur de formatage à la ligne " + QString::number(nLigne);
+                    message += ".\n Arret de la lecture !";
+                    QMessageBox::warning(this , "ERREUR" , message);
+                    // retourner à l'ancien liste en cas d'erreur
+                    historique = tmp;
+                    liste = historique.back();
+                    historique.pop_back();
+                }
+                nLigne++;
             }
             entree.close();
             lister();
+            histoRetablir.clear();
         }
         else
         {
@@ -422,12 +482,10 @@ void Inscription::OuvrirFichier()
 void Inscription::closeEvent(QCloseEvent *event)
 {
     QMessageBox::StandardButton reponse ;
+    bool modifie;
 
-    if(liste.empty())
-    {
-        event->accept();
-    }
-    else
+    modifie = estModifier();
+    if(modifie)
     {
         reponse = QMessageBox::question(this , "Quitter" , "Voulez-vous enregistrer avant de quitter ?" , QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel );
         if(reponse == QMessageBox::Yes)
@@ -443,6 +501,10 @@ void Inscription::closeEvent(QCloseEvent *event)
         {
             event->ignore();
         }
+    }
+    else
+    {
+        event->accept();
     }
 }
 vector<string> Inscription::separe(char sep, string chaine)

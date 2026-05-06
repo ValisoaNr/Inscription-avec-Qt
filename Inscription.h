@@ -25,6 +25,7 @@ public:
     int initialise(Personne& individu , bool accepteErreur);
     vector<Personne> trouve(Personne individu , vector<Personne> listeP);
     vector<string> separe(char sep , string chaine);
+    bool estModifier();
 private slots:
     void lister();
     void ajouter();
