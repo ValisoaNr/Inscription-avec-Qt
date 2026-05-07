@@ -17,6 +17,9 @@ Inscription::Inscription(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // nom du fichier correspondant
+    nFichier = "sans_titre.csv";
+
     connect(ui->ajouter , SIGNAL(clicked()) , this , SLOT(ajouter()));
     connect(ui->rechercher , SIGNAL(clicked()) , this , SLOT(rechercher()));
     connect(ui->supprimer , SIGNAL(clicked()) , this , SLOT(supprimer()));
@@ -31,6 +34,14 @@ Inscription::Inscription(QWidget *parent)
 vector<Personne> Inscription::getListe()
 {
     return (liste);
+}
+string Inscription::getNFichier()
+{
+    return (nFichier);
+}
+void Inscription::setNFichier(string nomFic)
+{
+    nFichier = nomFic;
 }
 vector<Personne> Inscription::trouve(Personne individu , vector<Personne> listeP)
 {
@@ -420,7 +431,16 @@ void Inscription::EnregistrerFichier()
     ofstream sorti;
     vector<Personne>::iterator iPers;
 
-    nomFichier = QFileDialog::getSaveFileName(this , "Sauvegarder en fichier le feuille" , "" , "filtre csv (*.csv)");
+    if(nFichier == "sans_titre.csv")
+    {
+        nomFichier = QFileDialog::getSaveFileName(this , "Sauvegarder en fichier le feuille" , QString::fromStdString(nFichier) , "filtre csv (*.csv)");
+        nFichier = nomFichier.toStdString();
+    }
+    else
+    {
+        nomFichier = QString::fromStdString(nFichier);
+    }
+
     if(nomFichier.length() == 0)
     {
         QMessageBox::warning(this , "annulation" , "Aucun nom de fichier n'a été introduit !");

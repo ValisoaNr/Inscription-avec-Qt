@@ -27,6 +27,8 @@ public:
     vector<Personne> trouve(Personne individu , vector<Personne> listeP);
     vector<string> separe(char sep , string chaine);
     bool estModifier();
+    string getNFichier();
+    void setNFichier(string nomFic);
 
 private slots:
     void lister();
@@ -47,6 +49,7 @@ private:
     QTableWidget *tableau;
     vector<vector<Personne>> historique;
     vector<vector<Personne>> histoRetablir;
+    string nFichier;
 
 };
 #endif
