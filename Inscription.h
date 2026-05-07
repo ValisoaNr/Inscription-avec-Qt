@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QTableWidget>
 #include <vector>
+#include <QPoint>
 
 using namespace std ;
 
@@ -26,6 +27,7 @@ public:
     vector<Personne> trouve(Personne individu , vector<Personne> listeP);
     vector<string> separe(char sep , string chaine);
     bool estModifier();
+
 private slots:
     void lister();
     void ajouter();
@@ -37,6 +39,8 @@ private slots:
     void OuvrirFichier();
     void EnregistrerFichier();
     void closeEvent(QCloseEvent *event) override;
+    void menuContextuel(const QPoint &position);
+
 private:
     Ui::Inscription *ui;
     vector<Personne> liste;

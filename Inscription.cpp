@@ -7,6 +7,8 @@
 #include <QFileDialog>
 #include <fstream>
 #include <QCloseEvent>
+#include <QMenu>
+#include <QAction>
 
 
 Inscription::Inscription(QWidget *parent)
@@ -161,27 +163,27 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
 }
 bool Inscription::estModifier()
 {
-    bool resultat;
-    vector<Personne>::iterator iPers , jPers;
-
-    resultat = true;
+    int i;
     // consideré comme modification s'il n'est plus comme l'etat initial
-    if(!historique.empty())
+
+    if(historique.empty())
     {
-        iPers = liste.begin();
-        jPers = historique.front().begin();
-        while(*iPers == *jPers)
-        {
-            iPers++;
-            jPers++;
-        }
-        if((jPers == historique.front().end()) && (iPers == liste.end()))
-        {
-            resultat = false;
-        }
+        return (false);
     }
 
-    return (resultat);
+    if(std::size(liste) != std::size(historique.front()))
+    {
+        return (true);
+    }
+
+    for(i=0 ; i<liste.size() ; i++)
+    {
+        if(!(liste[i] == historique.front()[i]))
+        {
+            return (true);
+        }
+    }
+    return (false);
 }
 void Inscription::ajouter()
 {
@@ -231,7 +233,7 @@ void Inscription::lister()
 {
     vector<Personne>::iterator pers;
     QTableWidgetItem *nom , *prenom , *age;
-    int row ;
+    int nLigne ;
 
     // definition des valeurs
     tableau = new QTableWidget();
@@ -242,8 +244,8 @@ void Inscription::lister()
     tableau->blockSignals(true);
     while(pers != liste.end())
     {
-        row = tableau->rowCount();
-        tableau->insertRow(row);
+        nLigne = tableau->rowCount();
+        tableau->insertRow(nLigne);
 
         // QTableWidget n'accepte que de nouvelle element à inserer
         nom = new QTableWidgetItem();
@@ -251,22 +253,64 @@ void Inscription::lister()
         age = new QTableWidgetItem();
 
         nom->setText(pers->getNom());
-        tableau->setItem(row , 0 , nom);
+        tableau->setItem(nLigne , 0 , nom);
 
         prenom->setText(pers->getPrenom());
-        tableau->setItem(row , 1 , prenom);
+        tableau->setItem(nLigne , 1 , prenom);
 
         age->setText(QString::number(pers->getAge()));
-        tableau->setItem(row , 2 , age);
+        tableau->setItem(nLigne , 2 , age);
         pers++;
     }
 
     tableau->blockSignals(false);
     connect(tableau , &QTableWidget::itemChanged , this , &Inscription::tableauEditer );
+    // activation du menu contextuel
+    tableau->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(tableau , &QWidget::customContextMenuRequested , this , &Inscription::menuContextuel);
 
     ui->scroll->setWidget(tableau);
     ui->scroll->setWindowTitle("Liste des inscrit");
     ui->scroll->show();
+}
+void Inscription::menuContextuel(const QPoint &position)
+{
+    QTableWidgetItem *element;
+    QMenu menu;
+    QAction *modifier , *supprimer , *choix;
+    int nLigne;
+
+    element = tableau->itemAt(position);
+    // si la clic droit n'est pas dans une zone vide
+    if(element)
+    {
+        nLigne = element->row();
+        supprimer = menu.addAction("Supprimer");
+        modifier = menu.addAction("modifier");
+        choix = menu.exec(tableau->viewport()->mapToGlobal(position));
+
+        if(choix == supprimer)
+        {
+            historique.push_back(liste);
+            histoRetablir.clear();
+            liste.erase(liste.begin() + nLigne);
+            lister();
+        }
+        else if(choix == modifier)
+        {
+            ui->nom->setText(liste[nLigne].getNom());
+            ui->prenom->setText(liste[nLigne].getPrenom());
+            ui->age->setValue(liste[nLigne].getAge());
+            ui->position->setValue(nLigne + 1);
+            ui->checkBox->setChecked(true);
+
+            // ajouter pour valider
+            historique.push_back(liste);
+            histoRetablir.clear();
+            liste.erase(liste.begin() + nLigne);
+            lister();
+        }
+    }
 }
 void Inscription::tableauEditer(QTableWidgetItem *element)
 {
