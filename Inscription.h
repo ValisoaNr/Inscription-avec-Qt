@@ -29,6 +29,7 @@ public:
     bool estModifier();
     string getNFichier();
     void setNFichier(string nomFic);
+    void sauveHisto();
 
 private slots:
     void lister();

@@ -29,7 +29,9 @@ Inscription::Inscription(QWidget *parent)
     connect(ui->actionRetablir , SIGNAL(triggered()) , this , SLOT(Retablir()));
     connect(ui->actionEnregistrer , SIGNAL(triggered()) , this , SLOT(EnregistrerFichier()));
 
-    historique.push_back(liste);
+    // Desactiver en premier temps les boutons annuler et retablir
+    ui->actionAnnuler->setEnabled(false);
+    ui->actionRetablir->setEnabled(false);
 }
 vector<Personne> Inscription::getListe()
 {
@@ -229,9 +231,8 @@ void Inscription::ajouter()
             }
             else
             {
-                //etat actuelle
-                historique.push_back(liste);
-                histoRetablir.clear();
+                // Etat actuelle
+                sauveHisto();
 
                 iPers = liste.begin() + position ;
                 liste.insert(iPers , pers);
@@ -302,8 +303,7 @@ void Inscription::menuContextuel(const QPoint &position)
 
         if(choix == supprimer)
         {
-            historique.push_back(liste);
-            histoRetablir.clear();
+            sauveHisto();
             liste.erase(liste.begin() + nLigne);
             lister();
         }
@@ -316,8 +316,7 @@ void Inscription::menuContextuel(const QPoint &position)
             ui->checkBox->setChecked(true);
 
             // ajouter pour valider
-            historique.push_back(liste);
-            histoRetablir.clear();
+            sauveHisto();
             liste.erase(liste.begin() + nLigne);
             lister();
         }
@@ -335,8 +334,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
     // Vérifier que la ligne correspond à un élément existant dans la liste
     if((ligne >= 0) && (ligne < (int)liste.size()))
     {
-        historique.push_back(liste);
-        histoRetablir.clear();
+        sauveHisto();
 
         valeur = element->text().trimmed();
         switch(colonne)
@@ -381,8 +379,7 @@ void Inscription::supprimer()
     iPers = std::find(liste.begin() , liste.end() , pers);
     if(iPers != liste.end())
     {
-        historique.push_back(liste);
-        histoRetablir.clear();
+        sauveHisto();
         liste.erase(iPers);
     }
     else
@@ -398,28 +395,47 @@ Inscription::~Inscription()
     histoRetablir.clear();
     delete tableau;
 }
-
+void Inscription::sauveHisto()
+{
+    historique.push_back(liste);
+    ui->actionAnnuler->setEnabled(true);
+    histoRetablir.clear();
+    ui->actionRetablir->setEnabled(false);
+}
 void Inscription::Annuler()
 {
-    if(historique.size() > 1)
+    if(historique.size() != 0)
     {
         histoRetablir.push_back(liste);
+        ui->actionRetablir->setEnabled(true);
         liste = historique.back();
         historique.pop_back();
+
         lister();
+    }
+
+    if(historique.size() == 0)
+    {
+        ui->actionAnnuler->setEnabled(false);
     }
 }
 
 void Inscription::Retablir()
 {
+    // Restaurer l'état depuis l'historique de rétablissement
     if(histoRetablir.size() != 0)
     {
-        // Restaurer l'état depuis l'historique de rétablissement
         historique.push_back(liste);
+        ui->actionAnnuler->setEnabled(true);
         liste = histoRetablir.back();
         histoRetablir.pop_back();
 
         lister();
+    }
+
+    if(histoRetablir.size() == 0)
+    {
+        ui->actionRetablir->setEnabled(false);
     }
 }
 
@@ -472,10 +488,10 @@ void Inscription::OuvrirFichier()
 {
     QString nomFichier, nom, prenom , message;
     string fichier, chaine;
-    vector<vector <Personne>> tmp;
+    vector<vector <Personne>> tmp , tmpR;
     vector<string> champs;
     ifstream entree;
-    int age , nLigne;
+    int age , nLigne , erreur;
     Personne pers;
 
     nomFichier = QFileDialog::getOpenFileName(this , "Importez un fichier l'editeur" , "" , "filtre csv (*.csv)");
@@ -491,17 +507,20 @@ void Inscription::OuvrirFichier()
 
         if(entree)
         {
-            // preserver en cas d'erreur du lecture de fichier actuelle
+            // preserver l'historique en cas d'erreur du lecture de fichier
             historique.push_back(liste);
             tmp = historique;
+            tmpR = histoRetablir;
             // pour voir les etats de modification
             historique.clear();
+            histoRetablir.clear();
             liste.clear();
 
             nLigne = 1;
+            erreur = 0;
             while(getline(entree, chaine))
             {
-                champs = separe(',', chaine);
+                champs = separe(',' , chaine);
                 if(std::size(champs) == 3)
                 {
                     nom = QString::fromStdString(champs.at(0));
@@ -509,12 +528,11 @@ void Inscription::OuvrirFichier()
                     age = atoi(champs.at(2).c_str());
                     if((age == 0) || (!isalpha(nom.toStdString().at(0))) || (!isalpha(prenom.toStdString().at(0))))
                     {
-                        message = "Erreur a la ligne : " + QString::number(nLigne);
+                        message = "Erreur a la ligne : " + QString::number(nLigne) + "\n>> " + QString::fromStdString(chaine);
                         QMessageBox::warning(this , "Erreur de nommage" , message);
-                        // retourner à l'ancien liste en cas d'erreur
-                        historique = tmp;
-                        liste = historique.back();
-                        historique.pop_back();
+
+                        erreur = 1;
+                        break ; // Arreter la lecture
                     }
                     pers.setNom(nom);
                     pers.setPrenom(prenom);
@@ -526,21 +544,37 @@ void Inscription::OuvrirFichier()
                     message = "Ce fichier presente une erreur de formatage à la ligne " + QString::number(nLigne);
                     message += ".\n Arret de la lecture !";
                     QMessageBox::warning(this , "ERREUR" , message);
-                    // retourner à l'ancien liste en cas d'erreur
-                    historique = tmp;
-                    liste = historique.back();
-                    historique.pop_back();
+
+                    erreur = 1;
+                    break ; // Arreter la lecture
                 }
                 nLigne++;
             }
             entree.close();
+            if(erreur == 1)
+            {
+                // retourner à l'ancien liste en cas d'erreur
+                historique = tmp;
+                histoRetablir = tmpR;
+                liste = historique.back();
+                historique.pop_back();
+            }
             lister();
-            histoRetablir.clear();
         }
         else
         {
             QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier !");
         }
+    }
+
+
+    if(historique.size() != 0)
+    {
+        ui->actionAnnuler->setEnabled(true);
+    }
+    if(histoRetablir.size() != 0)
+    {
+        ui->actionRetablir->setEnabled(true);
     }
 }
 void Inscription::closeEvent(QCloseEvent *event)
