@@ -10,7 +10,6 @@
 #include <QMenu>
 #include <QAction>
 
-
 Inscription::Inscription(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Inscription)
@@ -28,6 +27,11 @@ Inscription::Inscription(QWidget *parent)
     connect(ui->actionOuvrir , SIGNAL(triggered()) , this , SLOT(OuvrirFichier()));
     connect(ui->actionRetablir , SIGNAL(triggered()) , this , SLOT(Retablir()));
     connect(ui->actionEnregistrer , SIGNAL(triggered()) , this , SLOT(EnregistrerFichier()));
+    // click entree pour prochain champ ou ajouter
+    connect(ui->nom , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
+    connect(ui->prenom , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
+    connect(ui->age , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
+
 
     // Desactiver en premier temps les boutons annuler et retablir
     ui->actionAnnuler->setEnabled(false);
@@ -44,6 +48,21 @@ string Inscription::getNFichier()
 void Inscription::setNFichier(string nomFic)
 {
     nFichier = nomFic;
+}
+void Inscription::deplaceCurseur()
+{
+    if(ui->nom->hasFocus())
+    {
+        ui->prenom->setFocus();
+    }
+    else if(ui->prenom->hasFocus())
+    {
+        ui->age->setFocus();
+    }
+    else if(ui->age->hasFocus())
+    {
+        ajouter();
+    }
 }
 vector<Personne> Inscription::trouve(Personne individu , vector<Personne> listeP)
 {

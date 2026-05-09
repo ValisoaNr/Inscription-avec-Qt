@@ -43,6 +43,7 @@ private slots:
     void EnregistrerFichier();
     void closeEvent(QCloseEvent *event) override;
     void menuContextuel(const QPoint &position);
+    void deplaceCurseur();
 
 private:
     Ui::Inscription *ui;
