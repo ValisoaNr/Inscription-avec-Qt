@@ -157,7 +157,7 @@
          <x>0</x>
          <y>0</y>
          <width>818</width>
-         <height>287</height>
+         <height>281</height>
         </rect>
        </property>
       </widget>
@@ -187,6 +187,7 @@
     </property>
     <addaction name="actionEnregistrer"/>
     <addaction name="actionOuvrir"/>
+    <addaction name="actionEnregistrer_sous"/>
    </widget>
    <addaction name="menuFichier"/>
    <addaction name="menuEdition"/>
@@ -247,6 +248,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionEnregistrer_sous">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentSaveAs"/>
+   </property>
+   <property name="text">
+    <string>Enregistrer sous ...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+E</string>
    </property>
   </action>
  </widget>

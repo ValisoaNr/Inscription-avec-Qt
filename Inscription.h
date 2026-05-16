@@ -27,6 +27,8 @@ public:
     vector<Personne> trouve(Personne individu , vector<Personne> listeP);
     vector<string> separe(char sep , string chaine);
     bool estModifier();
+    void setModifier(bool etat);
+    bool getModifier();
     string getNFichier();
     void setNFichier(string nomFic);
     void sauveHisto();
@@ -37,13 +39,14 @@ private slots:
     void supprimer();
     void rechercher();
     void tableauEditer(QTableWidgetItem *element);
-    void Annuler();
-    void Retablir();
-    void OuvrirFichier();
-    void EnregistrerFichier();
+    void annuler();
+    void retablir();
+    void ouvrirFichier();
+    void enregistrerFichier();
     void closeEvent(QCloseEvent *event) override;
     void menuContextuel(const QPoint &position);
     void deplaceCurseur();
+    void on_actionEnregistrer_sous_triggered();
 
 private:
     Ui::Inscription *ui;
@@ -52,6 +55,7 @@ private:
     vector<vector<Personne>> historique;
     vector<vector<Personne>> histoRetablir;
     string nFichier;
+    bool modifier;
 
 };
 #endif

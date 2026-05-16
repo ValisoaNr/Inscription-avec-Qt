@@ -18,15 +18,16 @@ Inscription::Inscription(QWidget *parent)
 
     // nom du fichier correspondant
     nFichier = "sans_titre.csv";
+    modifier = false;
 
     connect(ui->ajouter , SIGNAL(clicked()) , this , SLOT(ajouter()));
     connect(ui->rechercher , SIGNAL(clicked()) , this , SLOT(rechercher()));
     connect(ui->supprimer , SIGNAL(clicked()) , this , SLOT(supprimer()));
     connect(ui->lister , SIGNAL(clicked()) , this , SLOT(lister()));
-    connect(ui->actionAnnuler , SIGNAL(triggered()) , this , SLOT(Annuler()));
-    connect(ui->actionOuvrir , SIGNAL(triggered()) , this , SLOT(OuvrirFichier()));
-    connect(ui->actionRetablir , SIGNAL(triggered()) , this , SLOT(Retablir()));
-    connect(ui->actionEnregistrer , SIGNAL(triggered()) , this , SLOT(EnregistrerFichier()));
+    connect(ui->actionAnnuler , SIGNAL(triggered()) , this , SLOT(annuler()));
+    connect(ui->actionOuvrir , SIGNAL(triggered()) , this , SLOT(ouvrirFichier()));
+    connect(ui->actionRetablir , SIGNAL(triggered()) , this , SLOT(retablir()));
+    connect(ui->actionEnregistrer , SIGNAL(triggered()) , this , SLOT(enregistrerFichier()));
     // click entree pour prochain champ ou ajouter
     connect(ui->nom , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
     connect(ui->prenom , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
@@ -62,6 +63,7 @@ void Inscription::deplaceCurseur()
     else if(ui->age->hasFocus())
     {
         ajouter();
+        ui->scroll->setFocus();
     }
 }
 vector<Personne> Inscription::trouve(Personne individu , vector<Personne> listeP)
@@ -259,6 +261,7 @@ void Inscription::ajouter()
             lister();
         }
     }
+    modifier = estModifier();
 }
 void Inscription::lister()
 {
@@ -341,11 +344,16 @@ void Inscription::menuContextuel(const QPoint &position)
         }
     }
 }
+void Inscription::setModifier(bool etat)
+{
+    modifier = etat;
+}
 void Inscription::tableauEditer(QTableWidgetItem *element)
 {
     int ligne , colonne , age;
     bool ok;
     QString valeur;
+    string test;
 
     ligne = element->row();
     colonne = element->column();
@@ -356,34 +364,58 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
         sauveHisto();
 
         valeur = element->text().trimmed();
-        switch(colonne)
+        if(valeur.length() == 0)
         {
-            case 0:
+            QMessageBox::warning(this , "erreur" , "Ne peut pas etre vide !");
+        }
+        else
+        {
+            test = valeur.toStdString();
+            switch(colonne)
             {
-                liste[ligne].setNom(valeur);
-                break;
-            }
-            case 1:
-            {
-                liste[ligne].setPrenom(valeur);
-                break;
-            }
-            case 2:
-            {
-                age = valeur.toInt(&ok);
-                if (ok && (age > 0))
+                case 0:
                 {
-                    liste[ligne].setAge(age);
+                    if(isdigit(test[0]))
+                    {
+                        QMessageBox::warning(this , "Erreur" , "Un nom ne peut pas commencer par un nombre");
+                        lister();
+                    }
+                    else
+                    {
+                        liste[ligne].setNom(valeur);
+                    }
+                    break;
                 }
-                else
+                case 1:
                 {
-                    // Valeur invalide : remettre l'ancienne valeur dans le tableau
-                    tableau->blockSignals(true);
-                    valeur = QString::number(liste[ligne].getAge());
-                    element->setText(valeur);
-                    tableau->blockSignals(false);
+                    if(isdigit(test[0]))
+                    {
+                        QMessageBox::warning(this , "Erreur" , "Un prenom ne peut pas commencer par un nombre");
+                        lister();
+                    }
+                    else
+                    {
+                        liste[ligne].setPrenom(valeur);
+                    }
+                    break;
                 }
-                break;
+                case 2:
+                {
+                    age = valeur.toInt(&ok);
+                    if (ok && (age > 0))
+                    {
+                        liste[ligne].setAge(age);
+                    }
+                    else
+                    {
+                        // Valeur invalide : remettre l'ancienne valeur dans le tableau
+                        tableau->blockSignals(true);
+                        valeur = QString::number(liste[ligne].getAge());
+                        element->setText(valeur);
+                        tableau->blockSignals(false);
+                    }
+                    break;
+                }
             }
         }
     }
@@ -421,7 +453,7 @@ void Inscription::sauveHisto()
     histoRetablir.clear();
     ui->actionRetablir->setEnabled(false);
 }
-void Inscription::Annuler()
+void Inscription::annuler()
 {
     if(historique.size() != 0)
     {
@@ -439,7 +471,7 @@ void Inscription::Annuler()
     }
 }
 
-void Inscription::Retablir()
+void Inscription::retablir()
 {
     // Restaurer l'état depuis l'historique de rétablissement
     if(histoRetablir.size() != 0)
@@ -459,7 +491,7 @@ void Inscription::Retablir()
 }
 
 
-void Inscription::EnregistrerFichier()
+void Inscription::enregistrerFichier()
 {
     QString nomFichier , qchaine;
     string fichier , chaine;
@@ -470,6 +502,8 @@ void Inscription::EnregistrerFichier()
     {
         nomFichier = QFileDialog::getSaveFileName(this , "Sauvegarder en fichier le feuille" , QString::fromStdString(nFichier) , "filtre csv (*.csv)");
         nFichier = nomFichier.toStdString();
+        setNFichier(nFichier);
+        modifier = false;
     }
     else
     {
@@ -503,7 +537,7 @@ void Inscription::EnregistrerFichier()
     }
 
 }
-void Inscription::OuvrirFichier()
+void Inscription::ouvrirFichier()
 {
     QString nomFichier, nom, prenom , message;
     string fichier, chaine;
@@ -522,10 +556,14 @@ void Inscription::OuvrirFichier()
     if(!(nomFichier.isEmpty()))
     {
         fichier = nomFichier.toStdString();
+
         entree.open(fichier);
 
         if(entree)
         {
+            setNFichier(fichier);
+            modifier = false;
+
             // preserver l'historique en cas d'erreur du lecture de fichier
             historique.push_back(liste);
             tmp = historique;
@@ -577,6 +615,7 @@ void Inscription::OuvrirFichier()
                 histoRetablir = tmpR;
                 liste = historique.back();
                 historique.pop_back();
+                modifier = estModifier();
             }
             lister();
         }
@@ -599,15 +638,14 @@ void Inscription::OuvrirFichier()
 void Inscription::closeEvent(QCloseEvent *event)
 {
     QMessageBox::StandardButton reponse ;
-    bool modifie;
 
-    modifie = estModifier();
-    if(modifie)
+
+    if(modifier)
     {
         reponse = QMessageBox::question(this , "Quitter" , "Voulez-vous enregistrer avant de quitter ?" , QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel );
         if(reponse == QMessageBox::Yes)
         {
-            EnregistrerFichier();
+            enregistrerFichier();
             event->accept();
         }
         else if(reponse == QMessageBox::No)
@@ -646,3 +684,42 @@ vector<string> Inscription::separe(char sep, string chaine)
     resultat.push_back(tmp);
     return resultat;
 }
+
+void Inscription::on_actionEnregistrer_sous_triggered()
+{
+    QString nomFichier , qchaine;
+    string fichier , chaine;
+    ofstream sorti;
+    vector<Personne>::iterator iPers;
+
+    nomFichier = QFileDialog::getSaveFileName(this , "Sauvegarder en fichier le feuille" , QString::fromStdString(nFichier) , "filtre csv (*.csv)");
+
+    if(nomFichier.length() == 0)
+    {
+        QMessageBox::warning(this , "annulation" , "Aucun nom de fichier n'a été introduit !");
+        return;
+    }
+    setNFichier(nomFichier.toStdString());
+    fichier = nomFichier.toStdString();
+    sorti.open(fichier);
+
+    if(sorti)
+    {
+        iPers = liste.begin();
+        while(iPers != liste.end())
+        {
+            qchaine = iPers->getNom() + "," + iPers->getPrenom() + "," + QString::number(iPers->getAge());
+            chaine = qchaine.toStdString();
+            sorti << chaine << endl;
+            iPers++;
+        }
+        sorti.close();
+        QMessageBox::information(this, "Succès", "Liste sauvegardée avec succès !");
+    }
+    else
+    {
+        QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier pour l'écriture !");
+    }
+
+}
+

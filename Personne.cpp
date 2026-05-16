@@ -1,9 +1,13 @@
 #include "Personne.h"
 
 Personne::Personne()
-{}
+{
+
+}
 Personne::~Personne()
-{}
+{
+
+}
 QString Personne::getNom()
 {
     return (nom);
