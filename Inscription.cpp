@@ -33,10 +33,57 @@ Inscription::Inscription(QWidget *parent)
     connect(ui->prenom , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
     connect(ui->age , SIGNAL(returnPressed()) , this , SLOT(deplaceCurseur()));
 
+    // mes bar d'outils
+    connect(ui->actionsupprSLC , SIGNAL(triggered()) , this , SLOT(supprSelection()));
+    connect(ui->actionmodifierSLC , SIGNAL(triggered()) , this , SLOT(modifSelection()));
 
     // Desactiver en premier temps les boutons annuler et retablir
     ui->actionAnnuler->setEnabled(false);
     ui->actionRetablir->setEnabled(false);
+    ui->actionmodifierSLC->setEnabled(false);
+    ui->actionsupprSLC->setEnabled(false);
+}
+void Inscription::modifSelection()
+{
+    int ligne;
+
+    ligne = getElementClic()[0];
+
+    // Vérifier que la ligne correspond à un élément existant dans la liste
+    if((ligne >= 0) && (ligne < (int)liste.size()))
+{
+        ui->nom->setText(liste[ligne].getNom());
+        ui->prenom->setText(liste[ligne].getPrenom());
+        ui->age->setValue(liste[ligne].getAge());
+        ui->position->setValue(ligne+ 1);
+        ui->checkBox->setChecked(true);
+
+        // ajouter pour valider
+        sauveHisto();
+        liste.erase(liste.begin() + ligne);
+        lister();
+    }
+
+    ui->actionmodifierSLC->setEnabled(false);
+    ui->actionsupprSLC->setEnabled(false);
+    ui->nom->setFocus();
+}
+void Inscription::supprSelection()
+{
+    int ligne;
+
+    ligne = getElementClic()[0];
+
+    // Vérifier que la ligne correspond à un élément existant dans la liste
+    if((ligne >= 0) && (ligne < (int)liste.size()))
+    {
+        sauveHisto();
+        liste.erase(liste.begin() + ligne);
+        lister();
+    }
+
+    ui->actionsupprSLC->setEnabled(false);
+    ui->actionmodifierSLC->setEnabled(false);
 }
 vector<Personne> Inscription::getListe()
 {
@@ -54,16 +101,37 @@ void Inscription::deplaceCurseur()
 {
     if(ui->nom->hasFocus())
     {
-        ui->prenom->setFocus();
+        if((ui->nom->text().length() == 0) || (ui->nom->text()[0].isDigit()) )
+        {
+            QMessageBox::warning(this , "Attention" , "Nom ne doit pas etre vide ou commencer par un nombre !");
+        }
+        else
+        {
+            ui->prenom->setFocus();
+        }
     }
     else if(ui->prenom->hasFocus())
     {
-        ui->age->setFocus();
+        if((ui->prenom->text().length() == 0) || (ui->prenom->text()[0].isDigit()) )
+        {
+            QMessageBox::warning(this , "Attention" , "Prenom ne doit pas etre vide ou commencer par un nombre !");
+        }
+        else
+        {
+            ui->age->setFocus();
+        }
     }
     else if(ui->age->hasFocus())
     {
-        ajouter();
-        ui->scroll->setFocus();
+        if(ui->age->value() == 0)
+        {
+            QMessageBox::warning(this , "Attention" , "Age doit pas etre egale 0 !");
+        }
+        else
+        {
+            ajouter();
+            ui->scroll->setFocus();
+        }
     }
 }
 vector<Personne> Inscription::trouve(Personne individu , vector<Personne> listeP)
@@ -90,7 +158,7 @@ void Inscription::rechercher()
     vector<Personne>::iterator iPers;
     QTableWidget *tableau;
     QTableWidgetItem *nom , *prenom , *age;
-    int nLigne ;
+    int nLigne , i;
 
     initialise(pers , true);
     recherche = trouve(pers , liste);
@@ -122,8 +190,13 @@ void Inscription::rechercher()
         }
 
         ui->scroll->setWidget(tableau);
+        tableau->setGeometry(0 , 0 , ui->scroll->width() , ui->scroll->height());
         ui->scroll->setWindowTitle("Recherche");
         ui->scroll->show();
+        for(i=0 ; i<3 ; i++)
+        {
+            tableau->setColumnWidth(i , tableau->width()/3 );
+        }
     }
     else
     {
@@ -144,6 +217,7 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
     if((ui->nom->text().length() == 0)  && ( ! accepteErreur))
     {
         QMessageBox::warning(this , "Erreur" , "nom ne peut pas etre vide !");
+        ui->nom->setFocus();
     }
     else
     {
@@ -153,6 +227,7 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
             if((caractere.isDigit()) && ( ! accepteErreur))
             {
                 QMessageBox::warning(this , "Erreur" , " le nom ne doit pas commencer par un nombre");
+                ui->nom->setFocus();
             }
             else
             {
@@ -165,6 +240,7 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
     if((ui->prenom->text().length() == 0)  && ( ! accepteErreur))
     {
         QMessageBox::warning(this , "Erreur" , "prenom ne peut pas etre vide !");
+        ui->prenom->setFocus();
     }
     else
     {
@@ -174,6 +250,7 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
             if((caractere.isDigit())  && ( ! accepteErreur))
             {
                 QMessageBox::warning(this , "Erreur" , " le prenom ne doit pas commencer par un nombre");
+                ui->prenom->setFocus();
             }
             else
             {
@@ -187,6 +264,7 @@ int Inscription::initialise(Personne& individu , bool accepteErreur=false)
     if((ui->age->value() == 0) && ( ! accepteErreur))
     {
         QMessageBox::warning(this , "Erreur" , "Age invalide !");
+        ui->age->setFocus();
     }
     else
     {
@@ -267,11 +345,12 @@ void Inscription::lister()
 {
     vector<Personne>::iterator pers;
     QTableWidgetItem *nom , *prenom , *age;
-    int nLigne ;
+    int nLigne  , i;
 
     // definition des valeurs
     tableau = new QTableWidget();
     tableau->setColumnCount(3);
+
     tableau->setHorizontalHeaderLabels({"Nom", "Prenom", "Age"});
     pers = liste.begin();
 
@@ -303,9 +382,35 @@ void Inscription::lister()
     tableau->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tableau , &QWidget::customContextMenuRequested , this , &Inscription::menuContextuel);
 
+    // Pour les évènement de selection dans le tableau
+    connect(tableau , &QTableWidget::cellClicked , this , &Inscription::elementCliquee);
+
     ui->scroll->setWidget(tableau);
+    for(i=0 ; i<3 ; i++)
+    {
+        tableau->setColumnWidth(i , tableau->width()/3 );
+    }
+
     ui->scroll->setWindowTitle("Liste des inscrit");
     ui->scroll->show();
+}
+void Inscription::elementCliquee(int li , int co)
+{
+    vector<int> tmp;
+    tmp.push_back(li);
+    tmp.push_back(co);
+
+    setElementClic(tmp);
+    ui->actionmodifierSLC->setEnabled(true);
+    ui->actionsupprSLC->setEnabled(true);
+}
+vector<int> Inscription::getElementClic()
+{
+    return (elementClic);
+}
+void Inscription::setElementClic(vector<int> coord)
+{
+    elementClic = coord;
 }
 void Inscription::menuContextuel(const QPoint &position)
 {
@@ -319,8 +424,13 @@ void Inscription::menuContextuel(const QPoint &position)
     if(element)
     {
         nLigne = element->row();
+
         supprimer = menu.addAction("Supprimer");
+        supprimer->setShortcut(QKeySequence("Ctrl+S"));
+        supprimer->setShortcutVisibleInContextMenu(true);
         modifier = menu.addAction("modifier");
+        modifier->setShortcut(QKeySequence("Ctrl+M"));
+        modifier->setShortcutVisibleInContextMenu(true);
         choix = menu.exec(tableau->viewport()->mapToGlobal(position));
 
         if(choix == supprimer)
@@ -470,7 +580,6 @@ void Inscription::annuler()
         ui->actionAnnuler->setEnabled(false);
     }
 }
-
 void Inscription::retablir()
 {
     // Restaurer l'état depuis l'historique de rétablissement
@@ -489,8 +598,6 @@ void Inscription::retablir()
         ui->actionRetablir->setEnabled(false);
     }
 }
-
-
 void Inscription::enregistrerFichier()
 {
     QString nomFichier , qchaine;
@@ -684,7 +791,6 @@ vector<string> Inscription::separe(char sep, string chaine)
     resultat.push_back(tmp);
     return resultat;
 }
-
 void Inscription::on_actionEnregistrer_sous_triggered()
 {
     QString nomFichier , qchaine;
@@ -720,6 +826,4 @@ void Inscription::on_actionEnregistrer_sous_triggered()
     {
         QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier pour l'écriture !");
     }
-
 }
-

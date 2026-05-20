@@ -205,6 +205,8 @@
    </attribute>
    <addaction name="actionAnnuler"/>
    <addaction name="actionRetablir"/>
+   <addaction name="actionsupprSLC"/>
+   <addaction name="actionmodifierSLC"/>
   </widget>
   <action name="actionAnnuler">
    <property name="icon">
@@ -212,6 +214,9 @@
    </property>
    <property name="text">
     <string>Annuler</string>
+   </property>
+   <property name="toolTip">
+    <string>Annuler Ctrl+C</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -223,6 +228,9 @@
    </property>
    <property name="text">
     <string>Retablir</string>
+   </property>
+   <property name="toolTip">
+    <string>Retablir Ctrl+R</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
@@ -259,6 +267,40 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+E</string>
+   </property>
+  </action>
+  <action name="actionsupprSLC">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditDelete"/>
+   </property>
+   <property name="text">
+    <string>supprSLC</string>
+   </property>
+   <property name="toolTip">
+    <string>supprimer la selection Ctrl+S</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionmodifierSLC">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::SoftwareUpdateUrgent"/>
+   </property>
+   <property name="text">
+    <string>modifierSLC</string>
+   </property>
+   <property name="toolTip">
+    <string>modifier la selection Ctrl+M</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

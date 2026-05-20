@@ -6,6 +6,7 @@
 #include <QTableWidget>
 #include <vector>
 #include <QPoint>
+#include <QItemSelectionModel>
 
 using namespace std ;
 
@@ -32,6 +33,8 @@ public:
     string getNFichier();
     void setNFichier(string nomFic);
     void sauveHisto();
+    void setElementClic(vector<int> coord);
+    vector<int> getElementClic();
 
 private slots:
     void lister();
@@ -47,15 +50,19 @@ private slots:
     void menuContextuel(const QPoint &position);
     void deplaceCurseur();
     void on_actionEnregistrer_sous_triggered();
+    void supprSelection();
+    void modifSelection();
+    void elementCliquee(int li , int co);
 
 private:
     Ui::Inscription *ui;
     vector<Personne> liste;
     QTableWidget *tableau;
-    vector<vector<Personne>> historique;
-    vector<vector<Personne>> histoRetablir;
+    vector<vector<Personne>> historique , histoRetablir;
     string nFichier;
     bool modifier;
+    vector<int> elementClic;
+    QItemSelectionModel *selection;
 
 };
 #endif
