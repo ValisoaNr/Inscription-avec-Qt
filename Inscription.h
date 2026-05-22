@@ -35,6 +35,7 @@ public:
     void sauveHisto();
     void setElementClic(vector<int> coord);
     vector<int> getElementClic();
+    void messageStatBar(QString message);
 
 private slots:
     void lister();

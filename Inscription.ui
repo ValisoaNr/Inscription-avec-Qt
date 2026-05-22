@@ -192,7 +192,6 @@
    <addaction name="menuFichier"/>
    <addaction name="menuEdition"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
@@ -208,6 +207,7 @@
    <addaction name="actionsupprSLC"/>
    <addaction name="actionmodifierSLC"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAnnuler">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::EditUndo"/>
@@ -297,7 +297,7 @@
     <string>modifier la selection Ctrl+M</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+M</string>
+    <string>Ctrl+D</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

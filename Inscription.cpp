@@ -9,6 +9,7 @@
 #include <QCloseEvent>
 #include <QMenu>
 #include <QAction>
+#include <QProgressBar>
 
 Inscription::Inscription(QWidget *parent)
     : QMainWindow(parent)
@@ -19,6 +20,7 @@ Inscription::Inscription(QWidget *parent)
     // nom du fichier correspondant
     nFichier = "sans_titre.csv";
     modifier = false;
+    ui->statusBar->addPermanentWidget(new QLabel("Inscription avec Qt(en C++)"));
 
     connect(ui->ajouter , SIGNAL(clicked()) , this , SLOT(ajouter()));
     connect(ui->rechercher , SIGNAL(clicked()) , this , SLOT(rechercher()));
@@ -42,6 +44,7 @@ Inscription::Inscription(QWidget *parent)
     ui->actionRetablir->setEnabled(false);
     ui->actionmodifierSLC->setEnabled(false);
     ui->actionsupprSLC->setEnabled(false);
+
 }
 void Inscription::modifSelection()
 {
@@ -79,6 +82,7 @@ void Inscription::supprSelection()
     {
         sauveHisto();
         liste.erase(liste.begin() + ligne);
+        messageStatBar((liste.begin() + ligne)->getNom() + " : Personne supprimé ");
         lister();
     }
 
@@ -335,6 +339,7 @@ void Inscription::ajouter()
 
                 iPers = liste.begin() + position ;
                 liste.insert(iPers , pers);
+                messageStatBar(pers.getNom() + " : personne ajouté");
             }
             lister();
         }
@@ -429,7 +434,7 @@ void Inscription::menuContextuel(const QPoint &position)
         supprimer->setShortcut(QKeySequence("Ctrl+S"));
         supprimer->setShortcutVisibleInContextMenu(true);
         modifier = menu.addAction("modifier");
-        modifier->setShortcut(QKeySequence("Ctrl+M"));
+        modifier->setShortcut(QKeySequence("Ctrl+D"));
         modifier->setShortcutVisibleInContextMenu(true);
         choix = menu.exec(tableau->viewport()->mapToGlobal(position));
 
@@ -437,6 +442,7 @@ void Inscription::menuContextuel(const QPoint &position)
         {
             sauveHisto();
             liste.erase(liste.begin() + nLigne);
+            messageStatBar((liste.begin() + nLigne)->getNom() + " : personne suprimé");
             lister();
         }
         else if(choix == modifier)
@@ -493,6 +499,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
                     else
                     {
                         liste[ligne].setNom(valeur);
+                        messageStatBar("nom edité ligne n°" + QString::number(ligne+1));
                     }
                     break;
                 }
@@ -506,6 +513,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
                     else
                     {
                         liste[ligne].setPrenom(valeur);
+                        messageStatBar("prenom edité ligne n°" + QString::number(ligne+1));
                     }
                     break;
                 }
@@ -515,6 +523,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
                     if (ok && (age > 0))
                     {
                         liste[ligne].setAge(age);
+                        messageStatBar("valeur : age invalide ligne n°" + QString::number(ligne+1));
                     }
                     else
                     {
@@ -522,6 +531,7 @@ void Inscription::tableauEditer(QTableWidgetItem *element)
                         tableau->blockSignals(true);
                         valeur = QString::number(liste[ligne].getAge());
                         element->setText(valeur);
+                        messageStatBar("age edité ligne n°" + QString::number(ligne+1));
                         tableau->blockSignals(false);
                     }
                     break;
@@ -542,10 +552,11 @@ void Inscription::supprimer()
     {
         sauveHisto();
         liste.erase(iPers);
+        messageStatBar(iPers->getNom() + " a été supprimé!");
     }
     else
     {
-        QMessageBox::warning(this , "Introuvable" , "Aucune personne correspondant !");
+        messageStatBar("Introuvable : Aucune personne correspondant !");
     }
     lister();
 }
@@ -619,7 +630,7 @@ void Inscription::enregistrerFichier()
 
     if(nomFichier.length() == 0)
     {
-        QMessageBox::warning(this , "annulation" , "Aucun nom de fichier n'a été introduit !");
+        messageStatBar("annulation : Aucun nom de fichier n'a été introduit !");
         return;
     }
     fichier = nomFichier.toStdString();
@@ -636,11 +647,11 @@ void Inscription::enregistrerFichier()
             iPers++;
         }
         sorti.close();
-        QMessageBox::information(this, "Succès", "Liste sauvegardée avec succès !");
+        messageStatBar("Succès : Liste sauvegardée avec succès !");
     }
     else
     {
-        QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier pour l'écriture !");
+        messageStatBar("Erreur : Impossible d'ouvrir le fichier pour l'écriture !");
     }
 
 }
@@ -657,7 +668,7 @@ void Inscription::ouvrirFichier()
     nomFichier = QFileDialog::getOpenFileName(this , "Importez un fichier l'editeur" , "" , "filtre csv (*.csv)");
     if(nomFichier.length() == 0)
     {
-        QMessageBox::warning(this , "annulation" , "Aucun fichier n'a été selectionné !");
+        messageStatBar("annulation : Aucun fichier n'a été selectionné !");
         return;
     }
     if(!(nomFichier.isEmpty()))
@@ -728,7 +739,7 @@ void Inscription::ouvrirFichier()
         }
         else
         {
-            QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier !");
+            messageStatBar("Erreur : Impossible d'ouvrir le fichier !");
         }
     }
 
@@ -802,7 +813,7 @@ void Inscription::on_actionEnregistrer_sous_triggered()
 
     if(nomFichier.length() == 0)
     {
-        QMessageBox::warning(this , "annulation" , "Aucun nom de fichier n'a été introduit !");
+        messageStatBar("annulation : Aucun nom de fichier n'a été introduit !");
         return;
     }
     setNFichier(nomFichier.toStdString());
@@ -820,10 +831,14 @@ void Inscription::on_actionEnregistrer_sous_triggered()
             iPers++;
         }
         sorti.close();
-        QMessageBox::information(this, "Succès", "Liste sauvegardée avec succès !");
+        messageStatBar("Succès : Liste sauvegardée avec succès !");
     }
     else
     {
-        QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier pour l'écriture !");
+        messageStatBar("Erreur : Impossible d'ouvrir le fichier pour l'écriture !");
     }
+}
+void Inscription::messageStatBar(QString message)
+{
+    ui->statusBar->showMessage(message , 3000);
 }
