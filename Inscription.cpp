@@ -20,7 +20,15 @@ Inscription::Inscription(QWidget *parent)
     // nom du fichier correspondant
     nFichier = "sans_titre.csv";
     modifier = false;
-    ui->statusBar->addPermanentWidget(new QLabel("Inscription avec Qt(en C++)"));
+    // bar des status
+    rechBoutton = new QPushButton();
+    rechBoutton->setText("rechercher");
+    rechEdit = new QLineEdit();
+    ui->statusBar->addPermanentWidget(rechEdit);
+    ui->statusBar->addPermanentWidget(rechBoutton);
+    ui->statusBar->addPermanentWidget(new QLabel("[ Inscription avec Qt(en C++) ]"));
+    connect(rechBoutton , &QPushButton::clicked , this , &Inscription::faireRecherche);
+    connect(rechEdit , &QLineEdit::returnPressed , this , &Inscription::faireRecherche);
 
     connect(ui->ajouter , SIGNAL(clicked()) , this , SLOT(ajouter()));
     connect(ui->rechercher , SIGNAL(clicked()) , this , SLOT(rechercher()));
@@ -54,7 +62,7 @@ void Inscription::modifSelection()
 
     // Vérifier que la ligne correspond à un élément existant dans la liste
     if((ligne >= 0) && (ligne < (int)liste.size()))
-{
+    {
         ui->nom->setText(liste[ligne].getNom());
         ui->prenom->setText(liste[ligne].getPrenom());
         ui->age->setValue(liste[ligne].getAge());
@@ -70,6 +78,62 @@ void Inscription::modifSelection()
     ui->actionmodifierSLC->setEnabled(false);
     ui->actionsupprSLC->setEnabled(false);
     ui->nom->setFocus();
+}
+void Inscription::rechercher(Personne pers)
+{
+    vector<Personne> recherche;
+    vector<Personne>::iterator iPers;
+    QTableWidgetItem *nom , *prenom , *age;
+    QLabel *message;
+    int nLigne , i;
+
+    recherche = trouve(pers , liste);
+    if(std::size(recherche) != 0)
+    {
+        // definition des valeurs
+        tableau = new QTableWidget();
+        tableau->setColumnCount(3);
+        tableau->setHorizontalHeaderLabels({"Nom", "Prenom", "Age"});
+        iPers = recherche.begin();
+        while(iPers != recherche.end())
+        {
+            nLigne = tableau->rowCount();
+            tableau->insertRow(nLigne);
+
+            nom = new QTableWidgetItem();
+            prenom = new QTableWidgetItem();
+            age = new QTableWidgetItem();
+            // insertion du nom
+            nom->setText(iPers->getNom());
+            tableau->setItem(nLigne , 0 , nom);
+            // prenom
+            prenom->setText(iPers->getPrenom());
+            tableau->setItem(nLigne , 1 , prenom);
+            // age vers QString pour la troisieme colonne
+            age->setText(QString::number(iPers->getAge()));
+            tableau->setItem(nLigne , 2 , age);
+            iPers++;
+        }
+
+        ui->scroll->setWidget(tableau);
+        tableau->setGeometry(0 , 0 , ui->scroll->width() , ui->scroll->height());
+        ui->scroll->setWindowTitle("Recherche");
+        ui->scroll->show();
+        for(i=0 ; i<3 ; i++)
+        {
+            tableau->setColumnWidth(i , tableau->width()/3 );
+        }
+    }
+    else
+    {
+        QMessageBox::information(this , "Introuvable" , "Aucune Personne correspondante ! \n\n Veuillez bien remplir le champs pour une bonne recherche !");
+        if(tableau != nullptr)
+        {
+            tableau->clear();
+            message = new QLabel("Aucun resultat !");
+            ui->scroll->setWidget(message);
+        }
+    }
 }
 void Inscription::supprSelection()
 {
@@ -88,6 +152,22 @@ void Inscription::supprSelection()
 
     ui->actionsupprSLC->setEnabled(false);
     ui->actionmodifierSLC->setEnabled(false);
+}
+void Inscription::faireRecherche()
+{
+    Personne pers;
+    bool convertible;
+
+    pers.setNom(rechEdit->text());
+    pers.setPrenom(rechEdit->text());
+    rechEdit->text().toInt(&convertible);
+    if(convertible)
+    {
+        pers.setAge(rechEdit->text().toInt());
+    }
+
+    rechercher(pers);
+
 }
 vector<Personne> Inscription::getListe()
 {
@@ -158,54 +238,9 @@ vector<Personne> Inscription::trouve(Personne individu , vector<Personne> listeP
 void Inscription::rechercher()
 {
     Personne pers;
-    vector<Personne> recherche;
-    vector<Personne>::iterator iPers;
-    QTableWidget *tableau;
-    QTableWidgetItem *nom , *prenom , *age;
-    int nLigne , i;
 
     initialise(pers , true);
-    recherche = trouve(pers , liste);
-    if(std::size(recherche) != 0)
-    {
-        // definition des valeurs
-        tableau = new QTableWidget();
-        tableau->setColumnCount(3);
-        tableau->setHorizontalHeaderLabels({"Nom", "Prenom", "Age"});
-        iPers = recherche.begin();
-        while(iPers != recherche.end())
-        {
-            nLigne = tableau->rowCount();
-            tableau->insertRow(nLigne);
-
-            nom = new QTableWidgetItem();
-            prenom = new QTableWidgetItem();
-            age = new QTableWidgetItem();
-            // insertion du nom
-            nom->setText(iPers->getNom());
-            tableau->setItem(nLigne , 0 , nom);
-            // prenom
-            prenom->setText(iPers->getPrenom());
-            tableau->setItem(nLigne , 1 , prenom);
-            // age vers QString pour la troisieme colonne
-            age->setText(QString::number(iPers->getAge()));
-            tableau->setItem(nLigne , 2 , age);
-            iPers++;
-        }
-
-        ui->scroll->setWidget(tableau);
-        tableau->setGeometry(0 , 0 , ui->scroll->width() , ui->scroll->height());
-        ui->scroll->setWindowTitle("Recherche");
-        ui->scroll->show();
-        for(i=0 ; i<3 ; i++)
-        {
-            tableau->setColumnWidth(i , tableau->width()/3 );
-        }
-    }
-    else
-    {
-        QMessageBox::information(this , "Introuvable" , "Veuillez bien remplir les champs pour une bonne recherche !");
-    }
+    rechercher(pers);
 }
 void Inscription::setListe(vector<Personne> l)
 {

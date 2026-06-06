@@ -7,6 +7,7 @@
 #include <vector>
 #include <QPoint>
 #include <QItemSelectionModel>
+#include <QPushButton>
 
 using namespace std ;
 
@@ -36,6 +37,7 @@ public:
     void setElementClic(vector<int> coord);
     vector<int> getElementClic();
     void messageStatBar(QString message);
+    void rechercher(Personne pers);
 
 private slots:
     void lister();
@@ -54,6 +56,7 @@ private slots:
     void supprSelection();
     void modifSelection();
     void elementCliquee(int li , int co);
+    void faireRecherche();
 
 private:
     Ui::Inscription *ui;
@@ -64,6 +67,8 @@ private:
     bool modifier;
     vector<int> elementClic;
     QItemSelectionModel *selection;
+    QLineEdit *rechEdit;
+    QPushButton *rechBoutton;
 
 };
 #endif
